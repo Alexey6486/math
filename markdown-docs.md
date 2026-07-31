@@ -353,3 +353,8 @@ A&macr;
 :blush:
 
 ---
+
+### Верхний/нижний индекс
+P<sup>n</sup>
+P<sub>n</sub>
+P<sub>n</sub><sup>k</sup>

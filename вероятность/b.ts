@@ -44,3 +44,5 @@ const trials = 1_000_000;
 
 const prob = monteCarloProbability(diceCount, faces, k, trials);
 console.log(`P(хотя бы ${k} совпадений) ≈ ${prob.toFixed(4)}`);
+
+
