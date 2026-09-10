@@ -2,23 +2,7 @@
 DDL — язык описания данных. Команды DDL позволяют создавать, изменять и удалять объекты баз данных.  
 CREATE, ALTER, DROP
 
-### DML — Data Manipulation Language
-DML — язык манипулирования данными. Команды DML позволяют изменять данные, хранящиеся в таблицах.  
-INSERT, UPDATE, DELETE
-
-### DQL — Data Query Language
-DQL — язык запроса данных. Команды DQL позволяют извлекать данные из базы.  
-SELECT, JOIN, UNION, GROUP BY, HAVING
-
-### TCL — Transaction Control Language
-TCL — язык управления транзакциями.  
-COMMIT, ROLLBACK, SAVEPOINT
-
-### DCL — Data Control Language
-DCL — язык управления доступа к данным.  
-GRANT, REVOKE
-
----
+___
 
 ### Создание БД:
 CREATE DATABASE имя_бд 
@@ -44,10 +28,14 @@ LOCALE 'sv_SE.utf8'
 TEMPLATE template0;
 ```
 
+___
+
 ### Создание схемы:
 Чтобы создать дополнительную схему в созданной базе, подключитесь к ней.
 Чтобы подключиться к базе в консоли psql, выполните команду \c music (music — имя базы данных)
-CREATE SCHEMA имя_схемы;
+CREATE SCHEMA имя_схемы;  
+
+___
 
 ### Создание таблицы:
 CREATE TABLE имя_схемы.имя_таблицы (
@@ -74,33 +62,9 @@ CREATE TABLE s_test.users (
 );
 ```
 
-### Добавление записи в таблицу:
-INSERT INTO имя_таблицы (колонка1, колонка2, ...)
-VALUES (значение1, значение2, ...);  
-```
-INSERT INTO s_test.users (name)
-VALUES ('Анна');
-```
-SELECT * FROM s_test.users;
+___
 
-### Изменение данных в строке
-UPDATE имя_схемы.имя_таблицы
-SET имя_колонки = 'новое_значение'
-WHERE <условие>;
-```
-UPDATE s_test.users
-SET name = 'Игорь'
-WHERE id = 1;
-```
-
-### Удаление
-Таблица DROP TABLE IF EXISTS s_test.users;  
-Схема DROP SCHEMA IF EXISTS s_test;  
-Схема, если в ней отстались не удаленные табилцы DROP SCHEMA IF EXISTS s_test CASCADE;  
-БД DROP DATABASE music;  
-БД если отстались подключенные пользователи DROP DATABASE music WITH (FORCE);  
-
-### Редактирование
+### Редактирование БД, схемы, таблицы
 Название БД, схемы, таблицы:  
 ALTER DATABASE/SCHEMA/TABLE -- тип объекта  
 <имя_объекта>  
@@ -110,7 +74,7 @@ ALTER DATABASE shop RENAME TO supermarket;
 ALTER SCHEMA shop RENAME TO supermarket; 
 ALTER TABLE products RENAME TO goods;  
 ```
-___
+
 Столбцы (добавить, удалить, изменить тип), ограничения:    
 Название БД, схемы, таблицы:  
 ALTER TABLE <имя_таблицы>  
