@@ -51,21 +51,67 @@ INSERT INTO users VALUES (
 ```
 ___
 
-### Изменение данных в строке
-UPDATE имя_схемы.имя_таблицы
-SET имя_колонки = 'новое_значение'
-WHERE <условие>;
+### UPDATE - изменение данных в строке
+
+UPDATE <имя_схемы>.<имя_таблицы>
+SET
+-- список обновляемых полей и их новых значениий через запятую
+-- в таком формате
+<поле 1> = <значение 1>,
+<поле 2> = <значение 2>,
+-- ...
+<поле n> = <значение n>
+WHERE <условия>;
+
 ```
-UPDATE s_test.users
-SET name = 'Игорь'
-WHERE id = 1;
+UPDATE users
+SET 
+    phone = '+7 (123) 456-78-90',
+    email = 'ivanov.i@mail.ru'
+WHERE name = 'Иванов Иван Иванович'; - если поле содержит НЕ уникальное значение, то для всех строк  
+с аналогичным именем произойдут изменения
+
+изменение значения поля для ВСЕХ строк таблицы
+UPDATE products
+SET price = price * 1.1; - 
+
+изменение значения поля для ОПРЕДЕЛЕННЫХ строк таблицы
+UPDATE products
+SET price = price * 1.1
+WHERE category IN ('Средства гигиены', 'Косметика');
+
+UPDATE products
+SET price = price * 1.15
+WHERE category NOT IN ('Средства гигиены', 'Косметика', 'Продукты питания', 'Напитки');
 ```
 
 ___
 
-### Удаление
+### DROP - удаление самих БД, схемы, таблицы
+
 Таблица DROP TABLE IF EXISTS s_test.users;  
 Схема DROP SCHEMA IF EXISTS s_test;  
 Схема, если в ней отстались не удаленные табилцы DROP SCHEMA IF EXISTS s_test CASCADE;  
 БД DROP DATABASE music;  
 БД если отстались подключенные пользователи DROP DATABASE music WITH (FORCE);  
+
+___
+
+### DELETE .. WHERE удаление ИЗ таблицы
+
+DELETE FROM <имя таблицы>  
+WHERE <условие>;  
+
+```
+DELETE FROM products; - удалит все данные, процесс удаления построчный, занимает время
+```
+```
+DELETE FROM products
+WHERE amount = 0;
+```
+```
+TRUNCATE TABLE <имя таблицы>;
+  - очистка таблицы целиком сразу, быстрее чем DELETE;
+  - нельзя использовать WHERE
+  - сохраняется инкремент PK, если нужно сбросить добавляется команда ...RESTART IDENTITY;
+```
