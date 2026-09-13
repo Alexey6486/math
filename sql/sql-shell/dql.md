@@ -163,3 +163,32 @@ SELECT DISTINCT ON (category) category, price
 FROM products
 ORDER BY category ASC, price DESC;
 ```
+
+### CAST преобразование типа данных
+
+Для преобразования значений одного типа в другой в PostgreSQL есть функция CAST. Её общий синтаксис такой:  
+CAST(<значение> AS <новый тип>)
+
+Чтобы выгрузить долю проданных товаров, напишите такой запрос:
+
+```
+SELECT 
+    name, 
+    stock_out, 
+    stock_in, 
+    CAST(stock_out AS real) / stock_in 
+FROM stock;
+```
+
+Вместо CAST в PostgreSQL также можно использовать короткий оператор ::. Его общий синтаксис такой:
+
+```
+SELECT 
+    name, 
+    stock_out, 
+    stock_in, 
+    (stock_out::real / stock_in)::numeric(3, 2)
+FROM stock;  
+
+SELECT created_at::time FROM users; - из dd.mm.yyyy hh:mm вернет только hh:mm
+```
