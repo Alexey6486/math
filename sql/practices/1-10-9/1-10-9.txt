@@ -1,0 +1,79 @@
+create table trains (id serial primary key, train_number varchar(13), departure_station integer references it_stations(id), departure_date date, arrival_station integer references it_stations(id), arrival_date date);
+CREATE TABLE trains (
+    id SERIAL PRIMARY KEY ,
+    train_number varchar(13),
+    departure_station integer REFERENCES stations,
+    departure_date timestamp,
+    arrival_station integer REFERENCES stations,
+    arrival_date timestamp
+);
+
+create table car_types (id integer primary key, car_type_name text);
+CREATE TABLE car_types (
+    id integer PRIMARY KEY,
+    car_type_name text
+);
+
+create table cars (car_number integer primary key, car_type_id integer references car_types default 1, cars_have_no_passports boolean, date_entry date);
+CREATE TABLE cars (
+    id SERIAL PRIMARY KEY,
+    car_number varchar(6),
+    car_type_id integer REFERENCES car_types
+);
+
+create table cars_in_trains (id serial primary key, car_id integer references cars(car_number), train_id integer references trains(id));
+alter table cars_in_trains add column attach_date date, add column detach_date date;
+CREATE TABLE cars_in_trains (
+    id SERIAL PRIMARY KEY,
+    train_id integer REFERENCES trains,
+    car_id integer REFERENCES cars,
+    attach_date timestamp,
+    detach_date timestamp
+);
+
+create table cars_without_passport (id serial primary key, car_id integer references cars(car_number) unique);
+CREATE TABLE cars_have_no_passports (
+    id SERIAL PRIMARY KEY,
+    car_id integer REFERENCES cars UNIQUE,
+    date_entry timestamp
+);
+
+INSERT INTO car_types(id, car_type_name)
+VALUES
+    (1, 'вагон'),
+    (2, 'локомотив'),
+    (3, 'полувагон'),
+    (4, 'рефрижератор'),
+    (5, 'технический');
+
+INSERT INTO trains(train_number, departure_station, departure_date, arrival_station, arrival_date)
+VALUES
+    ('1234 567 8901', 1, to_timestamp('20.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), 4, null),
+    ('2345 678 9012', 2, to_timestamp('22.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), 5, to_timestamp('30.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'));
+
+INSERT INTO cars(car_number, car_type_id)
+VALUES
+    ('123456', 1),
+    ('234567', 1),
+    ('345678', 1),
+    ('456789', 2),
+    ('567890', 2);
+
+INSERT INTO cars_have_no_passports(car_id, date_entry)
+VALUES (5, NULL);
+
+INSERT INTO cars_in_trains(train_id, car_id, attach_date, detach_date)
+VALUES
+    (1, 4, to_timestamp('20.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), NULL),
+    (1, 1, to_timestamp('20.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), to_timestamp('25.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss')),
+    (2, 5, to_timestamp('22.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), to_timestamp('30.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss')),
+    (2, 2, to_timestamp('22.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), to_timestamp('30.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss')),
+    (2, 3, to_timestamp('25.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'), to_timestamp('30.06.2023 10:00:00', 'dd.mm.yyyy hh24:mi:ss'));
+
+ALTER TABLE shipments ADD COLUMN cars_in_trains_id integer REFERENCES cars_in_trains;
+
+UPDATE shipments SET cars_in_trains_id = 2 WHERE ID = 1;
+
+UPDATE shipments SET cars_in_trains_id = 4 WHERE ID = 2;
+
+UPDATE shipments SET cars_in_trains_id = 5 WHERE ID = 3;
