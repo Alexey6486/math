@@ -90,6 +90,8 @@ ALTER TABLE users ADD COLUMN address TEXT;
 ALTER TABLE suppliers
     ADD COLUMN comments TEXT,
     ADD COLUMN debt DECIMAL(12, 2);
+    
+DROP TABLE IF EXISTS "user" CASCADE; - user зарезервированное слово, поэтому нужно взять название таблицы в кавычки
 ```
 
 ALTER TABLE <имя_таблицы> ALTER COLUMN <имя_столбца> TYPE <новый_тип_данных>;  
