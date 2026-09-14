@@ -410,3 +410,63 @@ SELECT manager.name AS manager_name, subordinate.name AS subordinate_name
 FROM people AS manager 
 JOIN people AS subordinate ON manager.id = subordinate.manager_id;
 ```
+
+### Альтернативный синтаксис соединения таблиц
+
+**USING** - когда названия нужных для соединения столбцов в двух таблицах совпадают.  
+
+SELECT *  
+FROM left_table  
+[уточнение типа соединения] JOIN right_table  
+USING (столбцы для соединения)  
+
+```
+старый способ
+SELECT *
+FROM clients c
+JOIN purchases p
+ON c.client_id = p.client_id;
+
+способ USING
+SELECT *
+FROM clients c
+JOIN purchases p
+USING (client_id);
+```
+
+**NATURAL** - когда таблицы соединяются по одноимённым столбцам, есть и ещё более короткая форма записи. Вместо перечисления столбцов после ключевого слова USING и указания каких-либо условий после ON можно просто написать после идентификатора левой таблицы ключевое слово NATURAL, и тогда PostgreSQL сам обнаружит совпадающие имена столбцов и попробует объединить таблицы по ним.  
+
+```
+SELECT * FROM clients NATURAL JOIN purchases;
+```
+
+Результат будет таким же, как и с USING — таблицы объединены по client_id, дублирующиеся столбцы не выводятся.  
+При использовании NATURAL возможны проблемы:  
+1. Если в таблице есть столбцы, которые называются одинаково, но не предназначены для соединения, результат окажется пустым. Например, столбец name есть в таблицах clients и products. В первой таблице он содержит имена клиентов, а во второй — названия товаров. Объединение по этому столбцу даст пустую таблицу.  
+2. Если в таблицах не найдётся одинаковых имён для столбцов, то запрос выведет декартово произведение таблиц. В этом случае он может выполняться долго и «подвесить» клиент базы данных для больших таблиц.  
+
+**Соединение по произвольным полям**  
+
+```
+SELECT *
+FROM clients c
+JOIN purchases p
+ON c.surname = p.surname AND c.name = p.name;
+
+SELECT *
+FROM clients
+JOIN purchases
+USING (surname, name);
+
+SELECT 
+    a.actor_id,
+    a.first_name,
+    a.last_name,
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM actor AS a
+JOIN client AS c 
+ON a.last_name = c.last_name
+ORDER BY c.last_name;
+```

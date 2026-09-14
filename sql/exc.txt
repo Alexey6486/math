@@ -1,0 +1,15 @@
+select distinct category.name
+from movie
+join film_actor on movie.film_id = film_actor.film_id
+join film_category on film_category.film_id = movie.film_id
+join category on category.category_id = film_category.category_id
+where film_actor.actor_id = 148;
+
+select es.last_name as employee_last_name, ms.last_name as manager_last_name
+from staff as es
+left join staff as ms on ms.employee_id = es.reports_to;
+
+SELECT name, invoice_date::date
+FROM track
+left join invoice_line on invoice_line.track_id = track.track_id
+left join invoice on invoice.invoice_id = invoice_line.invoice_id;
