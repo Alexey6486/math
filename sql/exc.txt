@@ -13,3 +13,52 @@ SELECT name, invoice_date::date
 FROM track
 left join invoice_line on invoice_line.track_id = track.track_id
 left join invoice on invoice.invoice_id = invoice_line.invoice_id;
+
+select movie.title from movie
+left join film_actor on movie.film_id = film_actor.film_id where film_actor.film_id is null;
+
+select artist.name
+from artist
+left join album on artist.artist_id = album.artist_id
+where album.artist_id is null;
+
+/*
+select m.film_id, m.rating, fc.category_id, c.name
+from movie m
+left join film_category fc on fc.film_id = m.film_id
+left join category c on c.category_id = fc.category_id
+where m.rating = 'NC-17' and c.category_id = 3;
+*/
+
+update movie m
+set rating = 'R'
+from film_category fc
+left join category c on c.category_id = fc.category_id
+where fc.film_id = m.film_id and m.rating = 'NC-17' and c.category_id = 3;
+
+/* select actor_id, first_name, last_name from actor where last_name = 'Cage'; -- actor_id = 40 */
+
+/*
+select * from movie m
+left join film_actor fa on m.film_id = fa.film_id
+left join actor a on a.actor_id = fa.actor_id
+where a.actor_id = 40;
+*/
+
+UPDATE movie AS m
+SET description = description || '. Actor Johnny Cage takes part in the film.'
+from film_actor fa
+left join actor a on a.actor_id = fa.actor_id
+where m.film_id = fa.film_id and a.actor_id = 40;
+
+/*
+select * from invoice_line i
+left join track t on i.track_id = t.track_id
+where t.name = 'Balls to the Wall';
+*/
+
+delete from invoice_line i
+using track t
+where i.track_id = t.track_id and t.name = 'Balls to the Wall';
+
+
