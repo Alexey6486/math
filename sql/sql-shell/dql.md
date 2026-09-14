@@ -267,3 +267,146 @@ SELECT name, email FROM users u;
 -- псевдоним таблицы можно использовать как префикс к имени столбца
 SELECT u.name, u.email FROM users u; 
 ```
+
+### JOIN соединение таблиц
+
+Все соединения делят на два основных случая:  
+- перекрёстное соединение, или декартово произведение таблиц,  
+- соединения с сопоставлениями строк.  
+
+**Декартово произведение** - каждая строка одной таблицы соединяется с каждой другой строкой второй таблицы.  
+Если таблиц несколько, то все строки всех таблиц комбинируются между собой таким образом,  
+чтобы получить все возможные сочетания строк. Количество строк итоговое = перемножению строк таблиц.  
+Первая таблица 2 строки, вторая 4, третья 3 - результирующая таблица 2 * 4 * 3 = 24 строки.  
+
+```
+SELECT * FROM clients, products;
+или
+SELECT * FROM clients CROSS JOIN products;
+```
+
+**Сопоставление строк** - Чтобы соединить две таблицы с помощью сопоставления строк,  
+нужно прописать условие их соединения. Условия бывают разными, но чаще всего соединения  
+производят через столбец, на который наложено ограничение внешнего ключа.  
+
+Всего существует четыре типа таких соединений.  
+
+1. Внутреннее соединение — INNER JOIN, или просто JOIN.  
+2. Внешние соединения:  
+   2.1. Левое внешнее — LEFT OUTER JOIN, или LEFT JOIN.  
+   2.2. Правое внешнее — RIGHT OUTER JOIN, или RIGHT JOIN.  
+   2.3. Полное внешнее — FULL OUTER JOIN, или FULL JOIN.  
+
+![joins.png](../img/joins.png)  
+
+SELECT *  -- здесь можно перечислить отдельные столбцы или вычисляемые выражения  
+FROM left_table  
+[уточнение_типа_соединения] JOIN right_table  -- уточнение опционально  
+ON условие_соединения; (в CROSS JOIN не применяется, только фильтр WHERE)  
+
+```
+SELECT *
+FROM left_table
+JOIN right_table
+ON left_table.id = right_table.foreigh_key_id;
+
+SELECT *
+FROM clients, purchases 
+WHERE clients.id = purchases.client_id;
+```
+```
+соединение 3-х таблиц
+SELECT *
+FROM clients
+INNER JOIN (purchases INNER JOIN products ON purchases.product_id = products.id) - можно и без скобок
+ON clients.id = purchases.client_id;
+
+более читаемы вариант соединения 3-х таблиц
+SELECT *
+FROM clients
+JOIN purchases ON clients.id = purchases.client_id
+JOIN products ON purchases.product_id = products.id;
+```
+```
+отобразить определенные данные, здесь не данных таблицы purchases, но она есть в JOIN, без нее данных не получить
+SELECT 
+    clients.surname,
+    clients.name,
+    products.name,
+    products.type
+FROM clients
+JOIN purchases ON clients.id = purchases.client_id
+JOIN products ON purchases.product_id = products.id;
+```
+Если названия столбцов уникальны для соединённой таблицы (как surname и type в примере выше),  
+то исходные таблицы в запросе можно не указывать:  
+```
+SELECT surname, type FROM ...
+
+SELECT surname, type, name FROM ... - получи ошибку, потому что name есть в обеих таблицах
+
+SELECT surname, type, products.name FROM ... - OK
+```
+
+Другие типы соединений:  
+![joins-2.png](../img/joins-2.png)  
+У этих типов соединения нет конкретного названия. Здесь такие варианты:  
+1. строки левой таблицы, которых нет в правой;  
+2. строки правой, которых нет в левой;  
+3. уникальные строки левой и правой таблиц.  
+
+Пример, чтобы узнать пользователей, которые ничего не купили:  
+```
+SELECT *
+FROM clients
+LEFT OUTER JOIN purchases
+ON clients.id = purchases.client_id
+WHERE purchases.id IS NULL;
+```
+
+**Использование псевдонимов**  
+Псевдоним становится новым именем таблицы в рамках запроса.  
+Это значит, что если мы назначили таблице псевдоним, то нельзя использовать в этом запросе исходное имя таблицы.  
+```
+SELECT 
+    clients.surname,
+    clients.name,
+    products.name,
+    products.type
+FROM clients
+JOIN purchases ON clients.id = purchases.client_id
+JOIN products ON purchases.product_id = products.id;
+
+SELECT 
+    c.surname,
+    c.name,
+    pr.name,
+    pr.type
+FROM clients c
+JOIN purchases pu ON c.id = pu.client_id  -- у нас 2 таблицы на букву p, поэтому pu
+JOIN products pr ON pu.product_id = pr.id;  -- а тут pr
+```
+
+**Соединение таблицы с самой собой**  
+Иногда псевдонимы используют не для удобства, а по необходимости — бывают ситуации,  
+когда запрос можно написать только с псевдонимами, а без них не получится.  
+Например, когда таблица соединяется сама с собой.  
+Разберём на примере. Создадим таблицу менеджеров.  
+Некоторые из них могут быть руководителями других менеджеров:  
+
+```
+CREATE TABLE people (
+id SERIAL PRIMARY KEY,
+name character varying NOT NULL, -- имя
+manager_id integer  -- ссылка на руководителя
+);
+```
+
+Получается, в столбце manager_id может быть указан человек из той же таблицы.  
+Выполним запрос, который получит всех руководителей и их подчинённых. Для этого надо присвоить  
+таблице people два разных псевдонима, а затем соединить её с самой собой и прописать условие соединения.  
+```
+SELECT manager.name AS manager_name, subordinate.name AS subordinate_name
+FROM people AS manager 
+JOIN people AS subordinate ON manager.id = subordinate.manager_id;
+```
