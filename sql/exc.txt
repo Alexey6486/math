@@ -96,3 +96,32 @@ join film_category fc on fc.film_id = fa.film_id
 join category c on c.category_id = fc.category_id
 group by c.name
 order by actor_count desc, c.name asc;
+
+SELECT m.rating, sum(rental_rate)/count(*)
+FROM movie m
+GROUP BY m.rating
+HAVING avg(m.rental_rate) > 3;
+
+SELECT i.invoice_date::date, sum(i.total)
+FROM invoice i
+WHERE i.invoice_date between '2011-09-01' and '2011-10-01'
+GROUP BY i.invoice_date
+HAVING min(i.total) > 1 and max(i.total) < 10;
+
+select i.billing_country, count(*)
+from invoice i
+WHERE i.billing_address !~* '(Street|Way|Road|Drive)' and i.billing_postal_code is null
+GROUP by i.billing_country
+having count(*) > 10;
+
+select a.title, sum(t.unit_price) as album_price
+from album a
+join track t on t.album_id = a.album_id
+group by a.title
+having sum(t.unit_price) < 5
+order by sum(t.unit_price) desc;
+
+select c.first_name, count(c.first_name)
+from client c
+group by c.first_name
+having count(c.first_name) > 1;

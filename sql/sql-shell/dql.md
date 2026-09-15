@@ -717,3 +717,30 @@ GROUP BY invoice_date::date  -- группируем только по дате,
 ORDER BY invoice_date DESC
 LIMIT 10;
 ```
+
+### Оператор HAVING
+
+Если нужно получить срез данных после группировки, используют оператор HAVING. HAVING похож на оператор WHERE,  
+но HAVING всегда идёт после GROUP BY и применяется только в сочетании с ним.  
+**Не используют** без агрегирующих функций: нет смысла, в таких случаях больше подойдёт WHERE.  
+
+![having.jpg](../img/having.jpg)
+
+```
+SELECT 
+    customer_id,
+    SUM(total)
+FROM invoice
+GROUP BY customer_id
+HAVING SUM(total) > 41
+ORDER BY SUM(total) DESC;
+
+SELECT 
+    customer_id,
+    SUM(total)
+FROM invoice
+GROUP BY customer_id
+HAVING SUM(total) > 41 AND AVG(total) > 7
+ORDER BY SUM(total) DESC;
+```
+
