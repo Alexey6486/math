@@ -125,3 +125,46 @@ select c.first_name, count(c.first_name)
 from client c
 group by c.first_name
 having count(c.first_name) > 1;
+
+SELECT customer_id,
+       invoice_date,
+       total,
+       DATE_TRUNC('month', CAST(invoice_date AS timestamp)),
+       EXTRACT(WEEK FROM CAST(invoice_date AS timestamp))
+FROM invoice
+WHERE customer_id BETWEEN 20 AND 50 -- дополните условие;
+
+SELECT customer_id,
+       invoice_date,
+       total,
+       DATE_TRUNC('month', CAST(invoice_date AS timestamp)),
+       EXTRACT(WEEK FROM CAST(invoice_date AS timestamp))
+FROM invoice
+WHERE
+(customer_id BETWEEN 20 AND 50)
+and (
+    EXTRACT(WEEK FROM CAST(invoice_date AS timestamp)) = 5
+    or EXTRACT(WEEK FROM CAST(invoice_date AS timestamp)) = 7
+    or EXTRACT(WEEK FROM CAST(invoice_date AS timestamp)) = 10
+    or EXTRACT(WEEK FROM CAST(invoice_date AS timestamp)) = 33
+    or EXTRACT(WEEK FROM CAST(invoice_date AS timestamp)) = 48
+);
+
+select i.*
+from invoice i
+join client c on c.customer_id = i.customer_id
+where EXTRACT(DAY FROM i.invoice_date::timestamp) = 1 and c.company is null;
+
+select s.email
+from staff s
+where s.city = 'Calgary' and EXTRACT(YEAR FROM s.hire_date) = 2002;
+
+SELECT distinct SUBSTR(email, STRPOS(email, '@')+1) as domain_name
+FROM client;
+
+select c.name, STRING_AGG(m.title, ', '  ORDER BY m.title) as titles
+from movie m
+join film_category fc on fc.film_id = m.film_id
+join category c on c.category_id = fc.category_id
+group by c.name;
+
