@@ -61,4 +61,38 @@ delete from invoice_line i
 using track t
 where i.track_id = t.track_id and t.name = 'Balls to the Wall';
 
+/* select * from category;
+where m.name ILIKE '%video%';
+WHERE description LIKE 'test%'
+WHERE SUBSTRING(description FROM 1 FOR 1) = 'C';
+WHERE description ~ '^test';
+WHERE description ~* '^test'; - регистронезависимо */
 
+select count(*) from movie m
+join film_category f on f.film_id = m.film_id
+join category c on c.category_id = f.category_id
+where c.name ~* '^c';
+
+select count(distinct t.album_id) from track t
+join genre g on g.genre_id = t.genre_id
+where g.name ~* 'jazz';
+
+SELECT
+    sum(total),
+    CASE
+        WHEN i.total < 1 then 'low cost'
+        ELSE 'high cost'
+    END cost_category
+FROM invoice i
+join client c on c.customer_id = i.customer_id
+where c.phone is not null
+group by cost_category;
+
+SELECT
+    c.name,
+    count(distinct fa.actor_id) actor_count
+FROM film_actor fa
+join film_category fc on fc.film_id = fa.film_id
+join category c on c.category_id = fc.category_id
+group by c.name
+order by actor_count desc, c.name asc;
