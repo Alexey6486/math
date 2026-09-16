@@ -1,0 +1,130 @@
+create database sprint_1;
+\c sprint_1;
+create schema sprint_1.raw_data;
+
+create table raw_data.sales (
+id integer,
+auto varchar(255),
+gasoline_consumption real,
+price real,
+date date,
+person_name varchar(255),
+phone varchar(128),
+discount varchar(2),
+brand_origin varchar(128)
+);
+
+\copy raw_data.sales(id, auto, gasoline_consumption, price, date, person_name, phone, discount, brand_origin) FROM 'C:\Users\alexe\Downloads\cars.csv' WITH (FORMAT csv, HEADER true, NULL 'null', ENCODING 'UTF8');
+
+create schema sprint_1.car_shop;
+
+create table car_shop.countries (id serial primary key, name varchar(25) not null unique);
+
+create table car_shop.colors (id serial primary key, name varchar(25) not null unique);
+
+create table car_shop.cars (
+id serial primary key,
+country_id integer REFERENCES car_shop.countries(id), -- отдельная таблица со странами, поле не обязательное, т.е. есть значения null в исходном файле
+brand varchar(25) not null, -- отдельные таблицы, наверное делать не будем, много получится
+model varchar(25) not null unique,
+gasoline_consumption numeric(4, 2) CHECK (gasoline_consumption IS NULL OR gasoline_consumption > 0) -- может быть не указано, если указывается, то должно быть больше нуля
+);
+
+create table car_shop.cars_in_stock (
+id serial primary key,
+car_id integer REFERENCES car_shop.cars(id) not null, -- обязательное поле
+color_id integer REFERENCES car_shop.colors(id) not null, -- машина пришла, значит есть цвет
+price numeric(12, 2) not null CHECK (price > 0), -- ограничим в миллиард, избыточно, но кто знает, больше нуля, дарить не будем (в принципе цены на данном этапе может и не быть, цена может быть в таблице продаж, но тут все эти нюансы бизнеса опустим)
+produced_at date not null, -- дата производства автомобиля, обязательное поле
+amount varchar(3) not null default '0' -- количество машин в наличии
+);
+
+create table car_shop.clients (
+id serial primary key,
+first_name varchar(50) not null, -- по длине не знаю какие имена могу быть, у арабов там много букв и пробелов
+last_name varchar(50) not null, -- аналогично имени
+phone varchar(25) not null unique, -- не знаю какие бывают телефоны, думаю 25 достаточно
+phone_ext varchar(10) -- добавочный выношу отдельно, поле не обязательное, может не быть
+);
+
+create table car_shop.sales (
+id serial primary key,
+client_id integer REFERENCES car_shop.clients(id) not null, -- связь с таблицей клиентов, обязательное поле
+auto_id integer REFERENCES car_shop.cars_in_stock(id) not null, -- связь с таблицей автомобилей в наличии, обязательное поле
+date date not null default current_date, -- дата продажи, обязательное поле
+discount numeric(4, 2) default 0 check(discount >= 0) -- скидка на конерктную продажу, положительное число до 99.99, дарить уж совсем не будем, доплату брать тоже
+);
+
+
+/* Заполнение таблицы стран производителей автомобилей */
+
+insert into car_shop.countries (name)
+select distinct brand_origin from raw_data.sales
+where brand_origin is not null
+on conflict (name) do nothing;
+
+
+/* Заполнение таблицы цветов автомобилей */
+
+insert into car_shop.colors (name)
+select split_part(rds.auto, ',', 2) as car_color
+from raw_data.sales rds
+on conflict (name) do nothing;
+
+
+/* Заполнение таблицы автомобилей */
+
+insert into car_shop.cars (brand, model, country_id, gasoline_consumption)
+select
+distinct split_part(split_part(rds.auto, ',', 1), ' ', 1) as brand,
+trim(substring(split_part(rds.auto, ',', 1) from position(' ' in split_part(rds.auto, ',', 1)) + 1)) as model,
+csc.id as country_id,
+rds.gasoline_consumption as gasoline_consumption
+from raw_data.sales rds
+left join car_shop.countries csc on csc.name = rds.brand_origin;
+
+
+/* Заполнение таблицы автомобилей на складе */
+-- select rds.auto as car, rds.price as price, round(random()*10) as amount from raw_data.sales rds group by rds.auto, rds.price order by rds.auto;
+
+insert into car_shop.cars_in_stock (car_id, color_id, price, produced_at, amount)
+select
+csc.id as car_id,
+cscl.id as color_id,
+rds.price as price,
+'2012-01-01' as produced_at,
+round(random()*10) as amount
+from raw_data.sales rds
+join car_shop.cars csc on csc.brand = split_part(split_part(rds.auto, ',', 1), ' ', 1) and csc.model = trim(substring(split_part(rds.auto, ',', 1) from position(' ' in split_part(rds.auto, ',', 1)) + 1))
+join car_shop.colors cscl on cscl.name = split_part(rds.auto, ',', 2);
+
+
+/* Заполнение таблицы клиентов */
+
+insert into car_shop.clients (first_name, last_name, phone, phone_ext)
+select
+split_part(rds.person_name, ' ', 1) as first_name,
+split_part(rds.person_name, ' ', 2) as last_name,
+split_part(rds.phone, 'x', 1) as phone,
+split_part(rds.phone, 'x', 2) as phone_ext
+from raw_data.sales rds
+on conflict (phone) do nothing;
+
+
+/* Перенос таблицы продаж */
+
+insert into car_shop.sales (client_id, auto_id, date, discount)
+select
+cscl.id as client_id,
+cscs.id as auto_id,
+rds.date as date,
+rds.discount::numeric(4, 2) as discount
+from raw_data.sales rds
+left join car_shop.clients cscl on cscl.phone = split_part(rds.phone, 'x', 1)
+left join car_shop.colors csclr on csclr.name = split_part(rds.auto, ',', 2)
+left join car_shop.cars csc on csc.brand = split_part(split_part(rds.auto, ',', 1), ' ', 1) and csc.model = trim(substring(split_part(rds.auto, ',', 1) from position(' ' in split_part(rds.auto, ',', 1)) + 1))
+left join car_shop.cars_in_stock cscs on cscs.car_id = csc.id and cscs.color_id = csclr.id and cscs.price = rds.price::numeric(12, 2);
+
+
+
+

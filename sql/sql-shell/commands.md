@@ -14,9 +14,22 @@ ___
 \dt+ - таблицы с расширенной информацией
 \dt* - таблицы во всех схемах
 
+\dt имя_схемы.* - посмотреть таблицы определенной схемы
+
 SELECT table_schema, table_name
 FROM information_schema.tables
 WHERE table_type = 'BASE TABLE'
 ORDER BY table_schema, table_name;
 
+Сменить кодировку консоли на win1251
 \! chcp 1251  
+
+Переключиться на другую БД:
+\c другая_база
+
+Посмотреть, к какой БД и под каким пользователем ты сейчас подключён:
+SELECT current_database(), current_user;
+
+Очистить консоль:
+\! cls
+
