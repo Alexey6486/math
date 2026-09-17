@@ -18,6 +18,16 @@ brand_origin varchar(128)
 
 create schema sprint_1.car_shop;
 
+-- структура бд:
+-- таблица цветов           countries      (название цвета)
+-- таблица стран            colors         (название страны)
+-- таблица видов машин      cars           (марка, модель, id страны производства, расход топлива)
+-- таблица клиентов         clients        (имя, фамилия, телефон, добавочный телефон)
+-- таблица машин в наличии  cars_in_stock  (id вида машины, id цвета, цена, дата произведства, цена продажи, количество)
+-- таблица продаж           sales          (id клиента, id машины в наличии, дата продажи)
+
+-- дату производства машину можно не добавлять, сначала подумал, что таблице сырых данных, это дата производства машины
+
 create table car_shop.countries (id serial primary key, name varchar(25) not null unique);
 
 create table car_shop.colors (id serial primary key, name varchar(25) not null unique);
@@ -126,5 +136,87 @@ left join car_shop.cars csc on csc.brand = split_part(split_part(rds.auto, ',', 
 left join car_shop.cars_in_stock cscs on cscs.car_id = csc.id and cscs.color_id = csclr.id and cscs.price = rds.price::numeric(12, 2);
 
 
+/* Задание №1 */
+
+-- т.к. у меня есть таблица машин то это запрос для таблицы cars:
+
+select
+(count(g)/(count(c)::numeric/100))::numeric(4,2) as nulls_percentage_gasoline_consumption
+from car_shop.cars c
+left join car_shop.cars g on c.id = g.id and g.gasoline_consumption is null;
+
+/*
+-- еще один варинат через filter (не знаю, какой вариант лучше, быстрее, эффективнее)
+select
+(count(*) filter (where c.gasoline_consumption is null)::numeric/(count(*)::numeric/100))::numeric(4,2) as nulls_percentage_gasoline_consumption
+from car_shop.cars c;
+*/
+
+-- и если нужно узнать соотношение в таблице проданных машин sales:
+select
+(count(g)/(count(s)::numeric/100))::numeric(4,2) as nulls_percentage_gasoline_consumption
+from car_shop.sales s
+left join car_shop.cars_in_stock st on st.id = s.auto_id
+left join car_shop.cars g on g.id = st.car_id and g.gasoline_consumption is null;
 
 
+/* Задание №2 */
+
+select 
+c.brand as brand_name,
+extract(year from s.date::date) as year,
+round(avg(st.price), 2) as price_avg
+from car_shop.sales s 
+left join car_shop.cars_in_stock st on st.id = s.auto_id
+left join car_shop.cars c on c.id = st.car_id
+group by c.brand, extract(year from s.date::date) 
+order by c.brand, extract(year from s.date::date);
+
+
+/* Задание №3 */
+
+select 
+extract(month from s.date::date) as month,
+extract(year from s.date::date) as year,
+round(avg(st.price), 2) as price_avg
+from car_shop.sales s
+left join car_shop.cars_in_stock st on st.id = s.auto_id
+where extract(year from s.date::date) = 2022
+group by extract(month from s.date::date), extract(year from s.date::date), st.price
+order by extract(month from s.date::date);
+
+
+/* Задание №4 */
+
+select 
+concat(c.first_name, ' ', c.last_name ) as person,
+string_agg(concat(cr.brand, ' ', cr.model), ', ') as cars
+from car_shop.sales s
+left join car_shop.clients c on c.id = s.client_id
+left join car_shop.cars_in_stock st on st.id = s.auto_id
+left join car_shop.cars cr on cr.id = st.car_id
+group by concat(c.first_name, ' ', c.last_name)
+order by concat(c.first_name, ' ', c.last_name);
+
+
+/* Задание №5 */
+
+select
+ct.name as brand_origin,
+max(round((st.price/(100 - s.discount)*100), 2)) as price_max,
+min(round((st.price/(100 - s.discount)*100), 2)) as price_min
+from car_shop.sales s
+left join car_shop.clients c on c.id = s.client_id
+left join car_shop.cars_in_stock st on st.id = s.auto_id
+left join car_shop.cars cr on cr.id = st.car_id and cr.country_id is not null
+join car_shop.countries ct on ct.id = cr.country_id
+group by ct.name
+order by ct.name;
+
+
+/* Задание №6 */
+
+select
+count(*) as persons_from_usa_count
+from car_shop.clients c
+where substring(c.phone FROM 1 FOR 2) = '+1';
